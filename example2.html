@@ -100,10 +100,14 @@
 						return;	
 					}
 					
-					var frag = document.createDocumentFragment();					
+					// For better performance, use a temporal document fragment
+					// instead of attaching elements to the DOM one by one
+					var frag = document.createDocumentFragment();
+					
+					// Convert every item into a table row and attach the events
 					items.map(function (item) {
 							var trow = parseAs("tr", item, tableRowTemplate);
-							var input = trow.children[1].firstElementChild;
+							var input = trow.querySelector("input");
 							input.addEventListener("focus", setEditing(true));
 							input.addEventListener("blur", setEditing(false));
 							input.addEventListener("keyup", itemEdit);
@@ -113,6 +117,7 @@
 							frag.appendChild(node);
 						});
 						
+					// Append the generated nodes to the table body
 					var tableBody = document.getElementById("itemsTableBody");
 					tableBody.innerHTML = "";
 					tableBody.appendChild(frag);
