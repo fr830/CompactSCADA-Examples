@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CompactSCADA Tutorial | Example 1</title>
+    <title>CompactSCADA Tutorial | Example 3</title>
     <link rel="icon" type="image/ico" href="img/gesLogo.ico" />
     <link href="css/bootstrap.min.css" rel="stylesheet">
   </head>
@@ -12,7 +12,7 @@
   	<div class="container-fluid">
 	  	<div class="row">
   			<div class="col-md-8 col-md-offset-2">
-					<h1>Example 1: Reading from CompactSCADA</h1>
+					<h1>Example 3: Using Regular Expression Patterns</h1>
 				  <form id="csForm" onsubmit="return false;">
 						<div class="form-group">
 							<label for="csUrl" class="control-label">CompactSCADA URL: </label>
@@ -23,7 +23,10 @@
 							<label for="csInterval" class="control-label">Refresh Interval (ms): </label>
 							<input id="csInterval" name="csInterval" type="text" class="form-control" value="5000" />
 						</div>
-						<button name="startButton" class="btn btn-default">Start</button>
+						<div class="form-group">
+							<label for="csRegExpPattern" class="control-label">RegExp Pattern: </label>
+							<input id="csRegExpPattern" name="csRegExpPattern" type="text" class="form-control" />
+						</div>
 					</form>
 					<table class="table">
 						<thead>
@@ -39,16 +42,35 @@
 				</div>
 			</div>
 		</div>
+		
 		<script src="js/compactscada.js"></script>
 		<script>
+			var compactScada;
 			var form = document.getElementById("csForm");
 			
-			form.startButton.onclick = function () {
-				csForm.startButton.disabled = true;
-				var compactScada = new CompactScada(csForm.csUrl.value);
+			form.csRegExpPattern.addEventListener("keyup", function (keyEvent) {
+				
+				if (keyEvent.which !== 13) {	// ENTER KEY CODE
+					return;
+				}
+				
+				if (form.csRegExpPattern.value === null || form.csRegExpPattern.value.length === 0) {
+					alert("RegExp Pattern cannot be empty.");
+					return;					
+				}
+				
+				if (!compactScada) {
+					compactScada = new CompactScada(csForm.csUrl.value);
+				}
+				
+				// Stop any other previous query
+				compactScada.off();
+				
 				var queryOptions = {
-					interval: csForm.csInterval.value
+					interval: csForm.csInterval.value,
+					pattern: form.csRegExpPattern.value
 				};
+				
 				compactScada.on(queryOptions, function (items) {
 					var tableBody = document.getElementById("itemsTableBody");
 					tableBody.innerHTML = "";
@@ -61,7 +83,7 @@
 						tableBody.appendChild(tr);
 					}
 				});
-			}
+			});
 		</script>
   </body>
 </html>

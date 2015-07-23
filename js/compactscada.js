@@ -40,7 +40,7 @@
                         ? JSON.stringify(config.data)
                         : config.data;
         xhr.send(sendData);
-        if (config.interval) {
+        if (typeof config.interval === "number" && config.interval > 0) {
           global.setTimeout(makeRequest, config.interval);
         }
       }
@@ -54,10 +54,6 @@
   }
   
   CompactScada.prototype.on = function(config, callback) {
-    if (this._disposable) {
-        throw "This instance of CompactScada is already active";
-    }
-    
     if (callback === (void 0) && config instanceof Function) {
       callback = config;
       config = {};
@@ -78,7 +74,7 @@
       config2.method = "POST";
     }
 
-    this._disposable = requestJSON(config2, function(res) {
+    var disposable = requestJSON(config2, function(res) {
       if (callback) {
         var itemList = [];
         res = res instanceof Array ? res : [res];
@@ -95,15 +91,42 @@
         callback(itemList);
       }
     });
+    
+    if (typeof config2.interval === "number" && config2.interval > 0) {
+        this.activeQueries = this.activeQueries || {};
+        var keys = Object.keys(this.activeQueries);
+        var maxKey = keys.length === 0
+          ? -1
+          : keys.map(function(x) { return parseInt(x); })
+                .reduce(function(prev, val) {
+                  return prev > val ? prev : val;
+                });
+        this.activeQueries[++maxKey] = disposable;
+        return maxKey;
+    }
   }
   
-  CompactScada.prototype.off = function() {
-    if (this._disposable && typeof this._disposable.dispose === "function") {
-      if (this.debug) {
-        global.console.log("Requests to CompactScada stopped.");
+  CompactScada.prototype.off = function(queryId) {
+    if (!this.activeQueries) {
+      return false;
+    }
+    
+    if (queryId) {
+      if (queryId in this.activeQueries) {
+        this.activeQueries[queryId].dispose();
+        delete this.activeQueries[queryId];
+        return true;
       }
-      this._disposable.dispose();
-      delete this._disposable;
+      else {
+        return false;
+      }
+    }
+    else {
+      for (var key in this.activeQueries) {
+        this.activeQueries[key].dispose();
+      }
+      this.activeQueries = {};
+      return true;
     }
   }
   
