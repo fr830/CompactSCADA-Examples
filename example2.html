@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CompactSCADA Tutorial | Example 2</title>
+    <link rel="icon" type="image/ico" href="img/gesLogo.ico" />
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+  	<div class="container-fluid">
+	  	<div class="row">
+  			<div class="col-md-8 col-md-offset-2">
+				  <form id="csForm" onsubmit="return false;">
+						<div class="form-group">
+							<label for="csUrl" class="control-label">CompactSCADA URL: </label>
+							<input id="csUrl" name="csUrl" type="text" class="form-control"
+										value="http://localhost:8081/compactscada" />
+						</div>
+						<div class="form-group">
+							<label for="csInterval" class="control-label">Refresh Interval (ms): </label>
+							<input id="csInterval" name="csInterval" type="text" class="form-control" value="5000" />
+						</div>
+						<button name="startButton" class="btn btn-default">Start</button>
+					</form>
+					<table class="table">
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>Value</th>
+								<th>Quality</th>
+							</tr>
+						</thead>
+						<tbody id="itemsTableBody">
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		
+		<!-- This template will be used to generate rows in the table -->
+		<script type="text/template" id="tableRowTemplate">
+			<td>{{itemName}}</td>
+			<td>
+				<input value="{{value}}" data-itemname="{{itemName}}" />
+		 	</td>
+			<td>{{quality}}</td>
+		</script>
+		
+		<script src="js/compactscada.js"></script>
+		<script>
+			var compactScada;
+			var form = document.getElementById("csForm");
+			var tableRowTemplate = document.getElementById("tableRowTemplate")
+																		 .innerText.trim();
+			
+			// Template parsing ------------------------------
+			function parseAs(tag, data, template) {
+				var el = document.createElement(tag);
+				el.innerHTML = template.replace(/{{\s*(.*?)\s*}}/g, function (match, value) {
+					return data[value];
+				});
+				return el;
+			}
+			// -----------------------------------------------
+			
+			// Events ----------------------------------------
+			function setEditing(value) {
+				return function() {
+					form.isEditing = value;
+				}
+			}
+			
+			function itemEdit(keyEvent) {
+				if (keyEvent.which === 13) {	// ENTER KEY CODE
+					compactScada.set({
+						itemName: keyEvent.target.dataset.itemname,
+						value: keyEvent.target.value
+					});	
+         	keyEvent.target.blur();
+        }
+        if (keyEvent.which === 27) { 	// ESCAPE KEY CODE
+            keyEvent.target.blur();
+        }
+			}
+			// ------------------------------------------------
+			
+			// Start querying CompactSCADA --------------------
+			form.startButton.onclick = function () {
+				csForm.startButton.disabled = true;
+				compactScada = new CompactScada(csForm.csUrl.value);
+
+				var queryOptions = {
+					interval: csForm.csInterval.value
+				};
+				compactScada.on(queryOptions, function (items) {
+					// If we're editing don't overwrite the values
+					if (form.isEditing) {
+						return;	
+					}
+					
+					var frag = document.createDocumentFragment();					
+					items.map(function (item) {
+							var trow = parseAs("tr", item, tableRowTemplate);
+							var input = trow.children[1].firstElementChild;
+							input.addEventListener("focus", setEditing(true));
+							input.addEventListener("blur", setEditing(false));
+							input.addEventListener("keyup", itemEdit);
+							return trow;
+						})
+						.forEach(function (node) {
+							frag.appendChild(node);
+						});
+						
+					var tableBody = document.getElementById("itemsTableBody");
+					tableBody.innerHTML = "";
+					tableBody.appendChild(frag);
+				});
+			}
+		</script>
+  </body>
+</html>
