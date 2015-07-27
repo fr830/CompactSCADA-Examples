@@ -65,7 +65,11 @@
       : lit.defaultInterval;
 
     if (config.itemName) {
-      config2.url = this.url + lit.readURL + "/" + config.itemName
+      var itemName = config.itemName instanceof Array
+                     ? config.itemName.join(",")
+                     : config.itemName;
+      
+      config2.url = this.url + lit.readURL + "/" + itemName
       config2.method = "GET";
     }
     else {
