@@ -33,6 +33,7 @@
 							<tr>
 								<th>Name</th>
 								<th>Value</th>
+								<th>Timestamp</th>
 								<th>Quality</th>
 							</tr>
 						</thead>
@@ -79,6 +80,8 @@
 						tr.innerHTML =
 							"<td>" + items[i].itemName + "</td>" +
 							"<td>" + items[i].value + "</td>" +
+							"<td>" + items[i].timestamp.toLocaleDateString() + " "
+							     	 + items[i].timestamp.toLocaleTimeString() + "</td>" +
 							"<td>" + (items[i].quality === 192 ? "Good" : "Unknown") + "</td>";
 						tableBody.appendChild(tr);
 					}
