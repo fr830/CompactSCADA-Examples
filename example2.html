@@ -47,8 +47,8 @@
 			<td>
 				<input value="{{value}}" data-itemname="{{itemName}}" />
 		 	</td>
-		 	<td>{{timestamp}}</td>
-			<td>{{quality}}</td>
+		 	<td>{{formattedTimestamp}}</td>
+			<td>{{formattedQuality}}</td>
 		</script>
 		
 		<script src="js/compactscada.js"></script>
@@ -59,10 +59,18 @@
 																		 .innerText.trim();
 			
 			// Template parsing ------------------------------
-			function parseAs(tag, data, template) {
+			function parseAs(tag, template, data, extra) {
 				var el = document.createElement(tag);
 				el.innerHTML = template.replace(/{{\s*(.*?)\s*}}/g, function (match, value) {
-					return data[value];
+					if (typeof data === "object" && value in data) {
+						return data[value];
+					}
+					else if (typeof extra === "object" && value in extra) {
+						return extra[value];
+					}
+					else {
+						throw "Cannot find " + value + " field in provided data";
+					}
 				});
 				return el;
 			}
@@ -109,7 +117,10 @@
 					
 					// Convert every item into a table row and attach the events
 					items.map(function (item) {
-							var trow = parseAs("tr", item, tableRowTemplate);
+							var trow = parseAs("tr", tableRowTemplate, item, {
+								formattedQuality: (item.quality === 192 ? "Good" : "Unknown"),
+								formattedTimestamp: (item.timestamp.toLocaleDateString() + " " + item.timestamp.toLocaleTimeString())
+							});
 							var input = trow.querySelector("input");
 							input.addEventListener("focus", setEditing(true));
 							input.addEventListener("blur", setEditing(false));

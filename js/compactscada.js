@@ -2,7 +2,8 @@
  Developed by Green Eagle Solutions S.L. (Spain)
  Visit us http://www.greeneaglesolutions.com
 
- Release Date: 2015-07-21
+ Version: 1.0.0
+ Release Date: 2015-07-31
 
  For further information about CompactSCADA
  visit http://www.compactscada.com
@@ -13,7 +14,6 @@
     readURL: "read/items",
     readFromPatternURL: "read/patterns",
     writeURL: "write/items",
-    defaultInterval: 5000,
     defaultPattern: ".*"
   };
   
@@ -60,9 +60,15 @@
     }
 
     var config2 = {};
-    config2.interval = config.interval
-      ? parseInt(config.interval)
-      : lit.defaultInterval;
+    if (typeof config.interval === "number") {
+      config2.interval = config.interval;
+    }
+    else if (typeof config.interval === "string") {
+      config2.interval = parseInt(config.interval);
+    }
+    else {
+      config2.interval = 0;
+    }
 
     if (config.itemName) {
       var itemName = config.itemName instanceof Array
