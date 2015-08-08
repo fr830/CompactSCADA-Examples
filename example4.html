@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CompactSCADA Tutorial | Example 4</title>
+    <link rel="icon" type="image/ico" href="img/gesLogo.ico" />
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/vis.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+          <h1>Example 4: Advanced Data Representation</h1>
+          <form id="csForm" onsubmit="return false;">
+            <div class="form-group">
+              <label for="csUrl" class="control-label">CompactSCADA URL: </label>
+              <input id="csUrl" name="csUrl" type="text" class="form-control"
+                    value="http://localhost:8081/compactscada" />
+            </div>
+            <div class="form-group">
+              <label for="csInterval" class="control-label">Refresh Interval (ms): </label>
+              <input id="csInterval" name="csInterval" type="text" class="form-control" value="2000" />
+            </div>
+            <div class="form-group">
+              <label for="csRegExpPattern" class="control-label">RegExp Pattern: </label>
+              <input id="csRegExpPattern" name="csRegExpPattern" type="text" class="form-control" />
+            </div>
+          </form>
+          <div id="graphContainer"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/vis.min.js"></script>
+    <script src="js/compactscada.js"></script>
+
+    <script>
+      // Vis.js utility functions ----------------------
+      function createGraphInitValues(csItems) {
+        var i = 0, j = 0, max = 0, min = 0;
+        var groups = new vis.DataSet();
+        
+        while (i < colors.length && j < csItems.length) {
+          if (typeof csItems[j].value === "number") {
+            groups.add({
+              id: csItems[j].itemName,
+              content: csItems[j].itemName,
+              style: "stroke:" + colors[i].color + ";",
+              options: {
+                drawPoints: true,
+                interpolation: true
+              }
+            });
+            max = Math.max(max, csItems[j].value);
+            min = Math.min(min, csItems[j].value);
+            i++;
+          }
+          j++;
+        }
+        return {
+          groups: groups,
+          minValue: min, 
+          maxValue: max > min ? max : min + 1
+        };
+      }
+      
+      function renderGraph(graph, intervalSeconds) {
+          // move the window (you can think of different strategies).
+          var now = vis.moment().add(-intervalSeconds, "seconds");
+          var range = graph.getWindow();
+          var interval = range.end - range.start;
+          graph.setWindow(now - interval, now, {animation: false});
+          window.setTimeout(renderGraph, 100, graph, intervalSeconds);
+      }
+      
+      function createGraph(container, csInterval, csItems) {
+        var dataset = new vis.DataSet();
+        var initValues = createGraphInitValues(csItems);
+            
+        var graph = new vis.Graph2d(container, dataset, initValues.groups, {
+          drawPoints: true,
+          legend: true,
+          start: vis.moment().add(-60, "seconds"),
+          end: vis.moment(),
+          dataAxis: {
+            left: { range: {
+              min: initValues.minValue,
+              max: initValues.maxValue > 0
+                    ? initValues.maxValue * 1.5
+                    : initValues.maxValue * 0.5
+            } }
+          }
+        });
+        
+        renderGraph(graph, csInterval / 1000);
+        return {
+          graph: graph,
+          dataset: dataset
+        }
+      }
+      
+      function addDataPoints(graph, dataset, csItems) {
+        var now = vis.moment();
+        var groups = graph.groupsData;
+        for (var i = 0; i < csItems.length; i++) {
+          var group = groups.get(csItems[i].itemName);
+          if (group != null) {
+            dataset.add({
+              x: now,
+              y: csItems[i].value,
+              group: csItems[i].itemName
+            });
+          }
+        }
+    
+        // remove all data points which are no longer visible
+        var range = graph.getWindow();
+        var interval = range.end - range.start;
+        var oldIds = dataset.getIds({
+          filter: function (item) {
+            return item.x < (range.start - interval);
+          }
+        });
+        dataset.remove(oldIds);
+      }
+      // -----------------------------------------------
+
+      var compactScada, visGraph;
+      var form = document.getElementById("csForm");
+      var colors = ["red", "blue", "black", "green", "magenta"];
+      
+      form.csRegExpPattern.addEventListener("keyup", function (keyEvent) {
+        if (keyEvent.which !== 13) {	// ENTER KEY CODE
+          return;
+        }
+        else if (form.csRegExpPattern.value === null || form.csRegExpPattern.value.length === 0) {
+          alert("RegExp Pattern cannot be empty.");
+          return;
+        }
+        
+        // Activate compactSCADA if necessary and stop any other previous query
+        if (!compactScada) {
+          compactScada = new CompactScada(form.csUrl.value);
+        }
+        compactScada.off();
+        
+        // Reset vis Graph
+        if (visGraph) {
+          visGraph.graph.destroy();
+          visGraph = null;
+        }
+        
+        var queryOptions = {
+          interval: form.csInterval.value,
+          pattern: form.csRegExpPattern.value
+        };
+        
+        compactScada.on(queryOptions, function (csItems) {
+          if (!visGraph) {
+            visGraph = createGraph(
+              document.getElementById("graphContainer"),	// Graph container
+              parseInt(form.csInterval.value),					// CompactSCADA query interval 
+              csItems																			// Take 5 first items from CompactSCADA
+            );
+          }
+          addDataPoints(visGraph.graph, visGraph.dataset, csItems);
+        });
+      });
+    </script>
+  </body>
+</html>
