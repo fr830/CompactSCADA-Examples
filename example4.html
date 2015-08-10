@@ -13,7 +13,7 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-8 col-md-offset-2">
-          <h1>Example 4: Advanced Data Representation</h1>
+          <h1>Example 4: Advanced Data Representation with <a href="http://www.visjs.org">vis.js</a></h1>
           <form id="csForm" onsubmit="return false;">
             <div class="form-group">
               <label for="csUrl" class="control-label">CompactSCADA URL: </label>
@@ -42,7 +42,7 @@
       function createGraphInitValues(csItems) {
         var i = 0, j = 0, max = 0, min = 0;
         var groups = new vis.DataSet();
-        
+
         while (i < colors.length && j < csItems.length) {
           if (typeof csItems[j].value === "number") {
             groups.add({
@@ -62,11 +62,11 @@
         }
         return {
           groups: groups,
-          minValue: min, 
+          minValue: min,
           maxValue: max > min ? max : min + 1
         };
       }
-      
+
       function renderGraph(graph, intervalSeconds) {
           // move the window (you can think of different strategies).
           var now = vis.moment().add(-intervalSeconds, "seconds");
@@ -75,11 +75,11 @@
           graph.setWindow(now - interval, now, {animation: false});
           window.setTimeout(renderGraph, 100, graph, intervalSeconds);
       }
-      
+
       function createGraph(container, csInterval, csItems) {
         var dataset = new vis.DataSet();
         var initValues = createGraphInitValues(csItems);
-            
+
         var graph = new vis.Graph2d(container, dataset, initValues.groups, {
           drawPoints: true,
           legend: true,
@@ -94,14 +94,14 @@
             } }
           }
         });
-        
+
         renderGraph(graph, csInterval / 1000);
         return {
           graph: graph,
           dataset: dataset
         }
       }
-      
+
       function addDataPoints(graph, dataset, csItems) {
         var now = vis.moment();
         var groups = graph.groupsData;
@@ -115,7 +115,7 @@
             });
           }
         }
-    
+
         // remove all data points which are no longer visible
         var range = graph.getWindow();
         var interval = range.end - range.start;
@@ -131,7 +131,7 @@
       var compactScada, visGraph;
       var form = document.getElementById("csForm");
       var colors = ["red", "blue", "black", "green", "magenta"];
-      
+
       form.csRegExpPattern.addEventListener("keyup", function (keyEvent) {
         if (keyEvent.which !== 13) {	// ENTER KEY CODE
           return;
@@ -140,29 +140,29 @@
           alert("RegExp Pattern cannot be empty.");
           return;
         }
-        
+
         // Activate compactSCADA if necessary and stop any other previous query
         if (!compactScada) {
           compactScada = new CompactScada(form.csUrl.value);
         }
         compactScada.off();
-        
+
         // Reset vis Graph
         if (visGraph) {
           visGraph.graph.destroy();
           visGraph = null;
         }
-        
+
         var queryOptions = {
           interval: form.csInterval.value,
           pattern: form.csRegExpPattern.value
         };
-        
+
         compactScada.on(queryOptions, function (csItems) {
           if (!visGraph) {
             visGraph = createGraph(
               document.getElementById("graphContainer"),	// Graph container
-              parseInt(form.csInterval.value),					// CompactSCADA query interval 
+              parseInt(form.csInterval.value),					// CompactSCADA query interval
               csItems																			// Take 5 first items from CompactSCADA
             );
           }
