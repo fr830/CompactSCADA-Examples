@@ -10,7 +10,7 @@ CompactSCADA is a gateway for communication protocols, designed to be easy to co
 <h3>Quick Installation Guide</h3>			
 Find a step by step guide to install CompactSCADA <a title="Configuration tool included" href="http://compactscada.com/features/compactscada-quick-installation-process" target="_blank">here</a>.
 
-<h3>What's included</h3>
+<h3>What's Included</h3>
 The following components are included with the CompactSCADA installer:
 	
 * **CompactSCADA Manager:** 
@@ -22,5 +22,8 @@ Find more information about CompactSCADA Manager&nbsp;<a title="Configuration to
 * **Javascript API:** The CompactSCADA Javascript API library allows anyone to easily connect any website to CompactSCADA by abstracting the REST API.</li>
 				
 	
+<h3>Visit Our Websites</h3>
+Visit our websites for further information about CompactSCADA:
 
-
+* <a title="CompactSCADA.com" href="http://compactscada.com" target="_blank">CompactSCADA.com: News, Events and Licensing</a>.
+* <a title="CompactSCADA.com" href="http://docs.compactscada.com" target="_blank">CompactSCADA Documentation and Tutorials</a>.
