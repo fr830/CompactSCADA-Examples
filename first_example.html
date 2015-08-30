@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/ico" href="img/gesLogo.ico" />
+
+    <title>Green Eagle CompactSCADA Example</title>
+    <link href="css/vis.min.css" rel="stylesheet">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-switch.min.css" rel="stylesheet">
+    <link href="css/custom.css" rel="stylesheet">
+
+  </head>
+  <body>
+    <header>
+      <nav class="navbar navbar-default" role="navigation">
+
+      <div class="container-fluid container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="http://jorgesl.com/sectores/sector-energetico.html">
+            <img alt="CompactSCADA Logo" src="img/CompactSCADA-Logo.png">
+          </a>
+          <h3 class="navbar-text">Example</h3>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul id="nav-pages" class="nav navbar-nav pull-right">
+              <li>
+                <form class="navbar-form navbar-left" role="search">
+                  <label style="margin-right:20px">Simulation Mode</label> <input type="checkbox" name="my-checkbox" checked>
+                </form>
+              </li>
+            </ul>
+        </div>
+      </div>
+
+    </nav>
+  </header>
+
+
+  <div id="wrap" class="content-container wrap">
+    <div class="container-fluid container">
+
+      <div class="row"><div class="col-12" style="height:15px;"></div></div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel">
+            <div class="panel-heading cpointer expandable-panel">
+              <span class="panel-icon glyphicon glyphicon-cog"></span>
+              <span class="panel-title">CompactSCADA Configuration</span>
+              <span class="cpointer glyphicon glyphicon-question-sign" data-toggle="tooltip" role="button" title="Configure the connection parameters to retrieve information from CompactSCADA. Make sure the configuration matches what's configured on CompactSCADA Manager" data-placement="right"></span>
+              <span class="glyphicon glyphicon-chevron-up hidden expandable pull-right" style="margin-top: 10px;"></span>
+              <span class="glyphicon glyphicon-chevron-down expandable pull-right" style="margin-top: 10px;"></span>
+            </div>
+
+            <div class="panel-body hidden expandable">
+              <form id="csForm" onsubmit="return false;">
+
+                <div class="form-group">
+                  <label for="csUrl" class="control-label">CompactSCADA REST API URL: </label>
+                  <span class="cpointer glyphicon glyphicon-question-sign" data-toggle="tooltip" role="button" title="URL of CompactSCADA REST API configured on CompactSCADA Manager. Make sure this port is accesible." data-placement="right"></span>
+                  <input id="csUrl" name="csUrl" type="text" class="form-control"
+                        value="http://localhost:8081/compactscada" />
+                </div>
+                <div class="form-group">
+                  <label for="csInterval" class="control-label">Refresh Interval (ms): </label>
+                  <span class="cpointer glyphicon glyphicon-question-sign" data-toggle="tooltip" role="button" title="Period of time in miliseconds between CompactSCADA requests." data-placement="right"></span>
+                  <input id="csInterval" name="csInterval" type="text" class="form-control" value="5000" />
+                </div>
+                <div class="form-group">
+                  <label for="csRegExpPattern" class="control-label">RegExp Pattern: </label>
+                  <span class="cpointer glyphicon glyphicon-question-sign" data-toggle="tooltip" role="button" title="This pattern indicates what items should be requested to CompactSCADA. By default .* request all available items. For further information please check the JavaScript RegExp Reference" data-placement="right"></span>
+                  <input id="csRegExpPattern" name="csRegExpPattern" type="text" class="form-control" value="." />
+                </div>
+                <button name="startButton" class="btn btn-default">Apply</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:15px;"></div>
+
+      <div class="row">
+        <div  class="col-md-6"  >
+
+          <div class="panel">
+            <div class="panel-heading">
+              <span class="panel-icon glyphicon glyphicon-th-list"></span>
+              <span class="panel-title">Item Viewer</span>
+              <span class="cpointer glyphicon glyphicon-question-sign" data-toggle="tooltip" role="button" title="This panel shows the properties of the items configured on CompactSCADA Manager. Also allows the user to edit the value of a certain item (make sure simulation mode is OFF)." data-placement="right">
+              </span>
+            </div>
+
+            <div class="panel-body">
+
+              <table class="table table-condensed table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th style="width:40%">Name</th>
+                    <th style="width:30%">Value</th>
+                    <th style="width:15%">Timestamp</th>
+                    <th style="width:15%">Quality</th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="panel">
+            <div class="panel-heading">
+              <span class="panel-icon glyphicon glyphicon-stats"></span>
+              <span class="panel-title">Graph Monitor</span>
+              <span class="cpointer glyphicon glyphicon-question-sign" data-toggle="tooltip" role="button" title="This panel is design to monitor the value of up to '5' items along the time." data-placement="right">
+              </span>
+            </div>
+
+            <div class="panel-body">
+              <div id="graphContainer"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- This template will be used to generate rows in the table -->
+  <script type="text/template" id="tableRowTemplate">
+    <td data-label="Item" class="word-wrap overflow-hidden ">{{formattedItemName}}</td>
+    <td data-label="Value"><input value="{{value}}" data-itemname="{{itemName}}" class="form-control" /></td>
+    <td data-label="Time">{{formattedTimestamp}}</td>
+    <td data-label="Quality">{{formattedQuality}}</td>
+  </script>
+
+  <script src="js/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/bootstrap-switch.min.js"></script>
+  <script src="js/vis.min.js"></script>
+  <script src="js/compactscada.js"></script>
+  <script src="js/init.js"></script>
+
+  <script>
+
+    var compactScada, visGraph;
+    var form = document.getElementById("csForm");
+    var tableRowTemplate = document.getElementById("tableRowTemplate")
+                                   .innerText.trim();
+    var colors = ["red", "blue", "black", "green", "magenta"];
+    var simulationON = false;
+    var maxAxisValue = 0, minAxisValue = 0;
+    var pageLoaded = false;
+
+    // START Item Graph Monitor
+    // Vis.js utility functions ----------------------
+    function createGraphInitValues(csItems) {
+      var i = 0, j = 0, max = 0, min = 0;
+      var groups = new vis.DataSet();
+
+      while (i < colors.length && j < csItems.length) {
+        if (typeof csItems[j].value === "number") {
+          groups.add({
+            id: csItems[j].itemName,
+            content: csItems[j].itemName,
+            style: "stroke:" + colors[i].color + ";",
+            options: {
+              drawPoints: true,
+              interpolation: true
+            }
+          });
+          max = Math.max(max, csItems[j].value);
+          min = Math.min(min, csItems[j].value);
+          i++;
+        }
+        j++;
+
+      }
+
+      if(!pageLoaded)
+      {
+        maxAxisValue =  max > min ? max : min + 1;
+        minAxisValue = min;
+        pageLoaded = true;
+      }
+
+      return {
+        groups: groups,
+        minValue: min,
+        maxValue: max > min ? max : min + 1
+      };
+    }
+
+    function renderGraph(graph, intervalSeconds) {
+        // move the window (you can think of different strategies).
+        var now = vis.moment().add(-intervalSeconds, "seconds");
+        var range = graph.getWindow();
+        var interval = range.end - range.start;
+        graph.setWindow(now - interval, now, {animation: false});
+        window.setTimeout(renderGraph, 100, graph, intervalSeconds);
+    }
+
+    function createGraph(container, csInterval, csItems) {
+      var dataset = new vis.DataSet();
+      var initValues = createGraphInitValues(csItems);
+
+      var graph = new vis.Graph2d(container, dataset, initValues.groups, {
+        drawPoints: true,
+        legend: true,
+        start: vis.moment().add(-60, "seconds"),
+        end: vis.moment(),
+        dataAxis: {
+          left: { range: {
+            min: initValues.minValue,
+            max: initValues.maxValue > 0
+                  ? initValues.maxValue * 1.5
+                  : initValues.maxValue * 0.5
+          } }
+        }
+      });
+
+      renderGraph(graph, csInterval / 1000);
+      return {
+        graph: graph,
+        dataset: dataset
+      }
+    }
+
+    function addDataPoints(graph, dataset, csItems) {
+      var now = vis.moment();
+      var groups = graph.groupsData;
+      for (var i = 0; i < csItems.length; i++) {
+        var group = groups.get(csItems[i].itemName);
+        if (group != null) {
+          dataset.add({
+            x: now,
+            y: csItems[i].value,
+            group: csItems[i].itemName
+          });
+        }
+      }
+
+      // remove all data points which are no longer visible
+      var range = graph.getWindow();
+      var interval = range.end - range.start;
+      var oldIds = dataset.getIds({
+        filter: function (item) {
+          return item.x < (range.start - interval);
+        }
+      });
+      dataset.remove(oldIds);
+    }
+    // -----------------------------------------------
+
+    function updateGraphConfiguration (queryOptions)
+    {
+
+      // Reset vis Graph
+      if (visGraph) {
+        visGraph.graph.destroy();
+        visGraph = null;
+      }
+
+      compactScada.on(queryOptions, function (csItems) {
+        if (!visGraph) {
+          visGraph = createGraph(
+            document.getElementById("graphContainer"),	// Graph container
+            parseInt(csForm.csInterval.value),					// CompactSCADA query interval
+            csItems																			// Take 5 first items from CompactSCADA
+          );
+        }
+        addDataPoints(visGraph.graph, visGraph.dataset, csItems);
+      });
+    }
+
+
+    // END Item Graph Monitor
+
+    // START Item Viewer Behaviour
+    // Template parsing ------------------------------
+    function parseAs(tag, template, data, extra) {
+      var el = document.createElement(tag);
+      el.innerHTML = template.replace(/{{\s*(.*?)\s*}}/g, function (match, value) {
+        if (typeof data === "object" && value in data) {
+          return data[value];
+        }
+        else if (typeof extra === "object" && value in extra) {
+          return extra[value];
+        }
+        else {
+          throw "Cannot find " + value + " field in provided data";
+        }
+      });
+      return el;
+    }
+    // -----------------------------------------------
+
+    // Events ----------------------------------------
+    function setEditing(value) {
+      return function() {
+        form.isEditing = value;
+      }
+    }
+
+    function itemEdit(keyEvent) {
+      if (keyEvent.which === 13) {	// ENTER KEY CODE
+        compactScada.set({
+          itemName: keyEvent.target.dataset.itemname,
+          value: keyEvent.target.value
+        });
+        keyEvent.target.blur();
+      }
+      if (keyEvent.which === 27) { 	// ESCAPE KEY CODE
+          keyEvent.target.blur();
+      }
+    }
+    // ------------------------------------------------
+
+    // Start querying CompactSCADA --------------------
+
+    function updateItemViewerConfiguration (queryOptions)
+    {
+
+      compactScada.on(queryOptions, function (items) {
+        // If we're editing don't overwrite the values
+        if (form.isEditing) {
+          return;
+        }
+
+        // For better performance, use a temporal document fragment
+        // instead of attaching elements to the DOM one by one
+        var frag = document.createDocumentFragment();
+
+        // Convert every item into a table row and attach the events
+        items.map(function (item) {
+            var trow = parseAs("tr", tableRowTemplate, item, {
+              formattedQuality: (item.quality === 192 ? "Good" : "Unknown"),
+              formattedTimestamp: (item.timestamp.toLocaleDateString() + " " + item.timestamp.toLocaleTimeString()),
+              formattedItemName: item.itemName.replace(new RegExp('\\.', 'g'), '. ')
+              //formattedItemName: (item.itemName.length < 40)? item.itemName : item.itemName.substring(0,40) + "\n" + item.itemName.substring(40,80)
+            });
+            var input = trow.querySelector("input");
+            input.addEventListener("focus", setEditing(true));
+            input.addEventListener("blur", setEditing(false));
+            input.addEventListener("keyup", itemEdit);
+            return trow;
+          })
+          .forEach(function (node) {
+            frag.appendChild(node);
+          });
+
+        // Append the generated nodes to the table body
+        var tableBody = document.getElementById("itemsTableBody");
+        tableBody.innerHTML = "";
+        tableBody.appendChild(frag);
+      });
+    }
+
+    function simulateValueChangesOnItems(queryOptions)
+    {
+      compactScada.on(queryOptions, function (items) {
+        if(simulationON)
+        {
+          var itemsValues = [];
+          items.map(function (item) {
+            if (typeof item.value === "number") {
+
+              var maxValueToSimulate = (item.value * 1.10 >= maxAxisValue) ? maxAxisValue * 0.95 : item.value * 1.10;
+              var minValueToSimulate = maxValueToSimulate * 0.8
+
+              itemsValues.push({
+                itemName: item.itemName,
+                value: Math.floor((Math.random() * (maxValueToSimulate - minValueToSimulate)) + minValueToSimulate + 1)
+              });
+            }
+
+          });
+
+          compactScada.set(itemsValues);
+        }
+      });
+    }
+    function updateContiguration (){
+
+      // Activate compactSCADA if necessary and stop any other previous query
+      if (!compactScada) {
+        compactScada = new CompactScada(form.csUrl.value);
+      }
+      compactScada.off();
+
+      // Reset vis Graph
+      if (visGraph) {
+        visGraph.graph.destroy();
+        visGraph = null;
+      }
+
+      var queryOptions = {
+        interval: csForm.csInterval.value,
+        pattern: form.csRegExpPattern.value
+      };
+
+      updateGraphConfiguration (queryOptions);
+      updateItemViewerConfiguration (queryOptions);
+      simulateValueChangesOnItems (queryOptions);
+
+    }
+    // END Item Viewer Behaviour
+
+    form.csRegExpPattern.addEventListener("keyup", function (keyEvent) {
+      if (keyEvent.which !== 13) {	// ENTER KEY CODE
+        return;
+      }
+      else if (form.csRegExpPattern.value === null || form.csRegExpPattern.value.length === 0) {
+        alert("RegExp Pattern cannot be empty.");
+        return;
+      }
+    });
+
+    form.startButton.onclick = updateContiguration;
+    updateContiguration ();
+
+    // START Simulation Manager
+    $('input[name="my-checkbox"]').on('switchChange.bootstrapSwitch', function(event, state) {
+      simulationON = state;
+    });
+    // END Simulation Manager
+
+  </script>
+  <div id="footer">
+    <div class="pull-right">
+      <p>Developed by © <a href="http://www.greeneaglesolutions.com">Green Eagle Solutions SL, 2015</a>, for <a href="http://compactscada.com">CompactSCADA &#174;</a></p>
+    </div>
+  </div>
+  </body>
+</html>
